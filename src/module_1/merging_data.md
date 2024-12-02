@@ -456,7 +456,7 @@ total_revenues_reshape.head()
       <th></th>
       <th>date</th>
       <th>asset_num</th>
-      <th>price</th>
+      <th>T_rev</th>
     </tr>
   </thead>
   <tbody>
@@ -746,7 +746,7 @@ merged_data["asset_num"] = merged_data["asset_num"].astype(int)
 
 
 ```python
-merged_data = pd.merge(merged_data, sectors,how="inner", left_on="asset_num", right_on="id")
+merged_data = pd.merge(merged_data, sectors,how="left", left_on="asset_num", right_on="id")
 ```
 
 
@@ -1034,10 +1034,860 @@ merged_data.head()
 
 
 ```python
-merged_data.to_csv("merged_data.csv")
+#merged_data.to_csv("merged_data.csv")
 ```
+
+
+```python
+print(capital_expenditure_reshape.shape,
+cash_and_quivalents_reshape.shape ,
+diluted_shares_reshape.shape,
+ebit_reshape.shape ,
+ebitda_reshape.shape ,
+prices_reshape.shape ,
+net_income_reshape.shape,
+survivor_reshape.shape,
+total_assets_reshape.shape ,
+total_debt_reshape.shape ,
+total_revenues_reshape.shape )
+```
+
+    (4831638, 3) (4831638, 3) (4831638, 3) (4831638, 3) (4831638, 3) (4831638, 3) (4831638, 3) (4831638, 3) (4831638, 3) (4831638, 3) (4831638, 3)
+    
 
 
 ```python
 merged_data
 ```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>date</th>
+      <th>asset_num</th>
+      <th>price</th>
+      <th>cap_ex</th>
+      <th>cash</th>
+      <th>dil_shares</th>
+      <th>ebit</th>
+      <th>ebitda</th>
+      <th>net_inc</th>
+      <th>survivor</th>
+      <th>T_assets</th>
+      <th>T_debt</th>
+      <th>T_rev</th>
+      <th>sector</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2005-01-03</td>
+      <td>12861</td>
+      <td>0.954408</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>22515.239936</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2005-01-04</td>
+      <td>12861</td>
+      <td>0.964210</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>22515.239936</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2005-01-05</td>
+      <td>12861</td>
+      <td>0.972654</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>22515.239936</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2005-01-06</td>
+      <td>12861</td>
+      <td>0.973409</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>22515.239936</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2005-01-07</td>
+      <td>12861</td>
+      <td>1.044284</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>22515.239936</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>4831633</th>
+      <td>2024-09-24</td>
+      <td>195528</td>
+      <td>36.900000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <th>4831634</th>
+      <td>2024-09-25</td>
+      <td>195528</td>
+      <td>37.120000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <th>4831635</th>
+      <td>2024-09-26</td>
+      <td>195528</td>
+      <td>37.100000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <th>4831636</th>
+      <td>2024-09-27</td>
+      <td>195528</td>
+      <td>36.840000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <th>4831637</th>
+      <td>2024-09-30</td>
+      <td>195528</td>
+      <td>37.200000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+  </tbody>
+</table>
+<p>4831638 rows × 14 columns</p>
+</div>
+
+
+
+
+```python
+merged_data["date"]= pd.to_datetime(merged_data["date"])
+```
+
+
+```python
+merged_data.dtypes
+```
+
+
+
+
+    date          datetime64[ns]
+    asset_num              int32
+    price                float64
+    cap_ex               float64
+    cash                 float64
+    dil_shares           float64
+    ebit                 float64
+    ebitda               float64
+    net_inc              float64
+    survivor                bool
+    T_assets             float64
+    T_debt               float64
+    T_rev                float64
+    sector                object
+    dtype: object
+
+
+
+
+```python
+merged_data
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>date</th>
+      <th>asset_num</th>
+      <th>price</th>
+      <th>cap_ex</th>
+      <th>cash</th>
+      <th>dil_shares</th>
+      <th>ebit</th>
+      <th>ebitda</th>
+      <th>net_inc</th>
+      <th>survivor</th>
+      <th>T_assets</th>
+      <th>T_debt</th>
+      <th>T_rev</th>
+      <th>sector</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2005-01-03</td>
+      <td>12861</td>
+      <td>0.954408</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>22515.239936</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2005-01-04</td>
+      <td>12861</td>
+      <td>0.964210</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>22515.239936</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2005-01-05</td>
+      <td>12861</td>
+      <td>0.972654</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>22515.239936</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2005-01-06</td>
+      <td>12861</td>
+      <td>0.973409</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>22515.239936</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2005-01-07</td>
+      <td>12861</td>
+      <td>1.044284</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>22515.239936</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>4831633</th>
+      <td>2024-09-24</td>
+      <td>195528</td>
+      <td>36.900000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <th>4831634</th>
+      <td>2024-09-25</td>
+      <td>195528</td>
+      <td>37.120000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <th>4831635</th>
+      <td>2024-09-26</td>
+      <td>195528</td>
+      <td>37.100000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <th>4831636</th>
+      <td>2024-09-27</td>
+      <td>195528</td>
+      <td>36.840000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <th>4831637</th>
+      <td>2024-09-30</td>
+      <td>195528</td>
+      <td>37.200000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+  </tbody>
+</table>
+<p>4831638 rows × 14 columns</p>
+</div>
+
+
+
+
+```python
+merged_data["year_month"] = merged_data["date"].dt.to_period("M")
+
+```
+
+# Explanation of what we want to do with each column of the data frame:
+
+### First of all we groupby month and asset
+------------------------------------------
+prices_avg ==> Average price of the month, assuming that combine mean and variance is more representative of what happened during the month
+    
+prices_std = ("price", "std") ==> Variance to add aditional information about the changes of the prices during the month
+
+------------------------------------------ 
+==> From here, we take always the last non null value of the month. There are a lost of missing values. For some assets there are months without values and other months until 4 values. Depending on the asset frequence preference to share the fundamental information.
+
+We believe that the latest information of the month is the one with more added value for our model.
+
+cap_ex 
+
+cash 
+
+dil_shares 
+
+ebit 
+
+ebitda 
+
+net_inc
+
+survivor 
+
+T_assets 
+
+T_debt 
+
+T_rev 
+
+sector 
+
+
+
+```python
+merged_data_monthly = merged_data.groupby(["year_month","asset_num"]).agg(
+    prices_avg = ("price","mean"),
+    prices_std = ("price", "std"),
+    cap_ex = ("cap_ex", lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None) ,
+    cash = ("cash",lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None),
+    dil_shares = ("dil_shares",lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None),
+    ebit = ("ebit", lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None),
+    ebitda = ("ebitda", lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None),
+    net_inc= ("net_inc", lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None),
+    survivor = ("survivor", lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None),
+    T_assets = ("T_assets", lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None),
+    T_debt = ("T_debt", lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None),
+    T_rev = ("T_rev", lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None),
+    sector = ("sector", lambda x: x.dropna().iloc[-1] if not x.dropna().empty else None)
+    ).reset_index("asset_num")
+    
+```
+
+
+```python
+merged_data_monthly = merged_data_monthly.reset_index("asset_num")
+
+
+```
+
+
+```python
+merged_data_monthly
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>asset_num</th>
+      <th>prices_avg</th>
+      <th>prices_std</th>
+      <th>cap_ex</th>
+      <th>cash</th>
+      <th>dil_shares</th>
+      <th>ebit</th>
+      <th>ebitda</th>
+      <th>net_inc</th>
+      <th>survivor</th>
+      <th>T_assets</th>
+      <th>T_debt</th>
+      <th>T_rev</th>
+      <th>sector</th>
+    </tr>
+    <tr>
+      <th>year_month</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2005-01</th>
+      <td>12861</td>
+      <td>1.044658</td>
+      <td>0.054765</td>
+      <td>NaN</td>
+      <td>2475.0</td>
+      <td>22654.745232</td>
+      <td>678.0</td>
+      <td>819.125</td>
+      <td>508.0</td>
+      <td>True</td>
+      <td>9362.0</td>
+      <td>0.0</td>
+      <td>9763.0</td>
+      <td>Technology Hardware, Storage &amp; Peripherals</td>
+    </tr>
+    <tr>
+      <th>2005-01</th>
+      <td>12883</td>
+      <td>15.937120</td>
+      <td>0.220682</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>85.631000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Asset Management &amp; Custody Banks</td>
+    </tr>
+    <tr>
+      <th>2005-01</th>
+      <td>12911</td>
+      <td>28.959537</td>
+      <td>0.808192</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>477.254056</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <th>2005-01</th>
+      <td>12913</td>
+      <td>17.219656</td>
+      <td>0.893956</td>
+      <td>-10.3</td>
+      <td>494.3</td>
+      <td>810.457993</td>
+      <td>40.3</td>
+      <td>82.000</td>
+      <td>16.4</td>
+      <td>True</td>
+      <td>1428.1</td>
+      <td>400.3</td>
+      <td>784.3</td>
+      <td>Technology Hardware &amp; Equipment</td>
+    </tr>
+    <tr>
+      <th>2005-01</th>
+      <td>12924</td>
+      <td>31.974938</td>
+      <td>2.513884</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>229.500000</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>2024-09</th>
+      <td>745166</td>
+      <td>22.965238</td>
+      <td>0.390700</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Personal Products</td>
+    </tr>
+    <tr>
+      <th>2024-09</th>
+      <td>745870</td>
+      <td>109.998099</td>
+      <td>1.098238</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Water Utilities</td>
+    </tr>
+    <tr>
+      <th>2024-09</th>
+      <td>748463</td>
+      <td>226.407619</td>
+      <td>23.327221</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Heavy Electrical Equipment</td>
+    </tr>
+    <tr>
+      <th>2024-09</th>
+      <td>748466</td>
+      <td>68.647619</td>
+      <td>2.594660</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Health Care Supplies</td>
+    </tr>
+    <tr>
+      <th>2024-09</th>
+      <td>751051</td>
+      <td>46.618571</td>
+      <td>1.984450</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>True</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>Paper Packaging</td>
+    </tr>
+  </tbody>
+</table>
+<p>222306 rows × 14 columns</p>
+</div>
+
+
+
+
+```python
+merged_data_monthly.to_feather("merged_data_monthly.feather")
+```
+
+### Next steps
+
+How to deal with the missing values in the fundamentals? 
