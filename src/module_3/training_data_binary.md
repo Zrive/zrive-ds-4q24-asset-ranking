@@ -139,27 +139,27 @@ feature_cols = [col for col in df_final.columns if col not in info_cols + [targe
 print(df_final[feature_cols].isna().sum())
 ```
 
-    dil_shares                284
+    dil_shares                245
     new_sector                  0
-    ebit_marg                2741
-    ebitda_marg              2796
-    net_marg                  387
-    ROA                       405
-    ROE                       405
-    debts_assets              396
-    net_debt                  431
-    cash_ratio               1673
-    net_income_per_share      564
-    price_earning_ratio       565
-    ev                        611
-    Baseline                 3455
-    EV_EBITDA                3007
-    EV_EBIT                  2954
-    P_B_ratio                 396
-    Debt_to_Equity            396
-    Net_Debt_to_EBITDA       2846
-    Asset_Turnover            405
-    Cash_Conversion_Ratio     440
+    ebit_marg                2541
+    ebitda_marg              2590
+    net_marg                  352
+    ROA                       363
+    ROE                       363
+    debts_assets              354
+    net_debt                  388
+    cash_ratio               1496
+    net_income_per_share      498
+    price_earning_ratio       499
+    ev                        537
+    Baseline                 1524
+    EV_EBITDA                2766
+    EV_EBIT                  2719
+    P_B_ratio                 354
+    Debt_to_Equity            354
+    Net_Debt_to_EBITDA       2632
+    Asset_Turnover            363
+    Cash_Conversion_Ratio     397
     dtype: int64
     
 
@@ -255,87 +255,89 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
 
 ```python
 # This code is commented to avoid running it by mistake but it is left here to show the results
-# params_lgb = {
-#     'metric': 'logloss',
-#     'random_state': 1,
-#     'verbose': 0,
-#     'n_estimators': 50,
-#     'learning_rate': 0.01,
-#     'num_leaves': 32,
-#     'path_smooth': 0.1
-# }
+params_lgb = {
+    'metric': 'logloss',
+    'random_state': 1,
+    'verbose': 0,
+    'n_estimators': 50,
+    'learning_rate': 0.01,
+    'num_leaves': 32,
+    'path_smooth': 0.1
+}
 
 
-# for n_estimators in [50, 100]:
-#     for learning_rate in [0.01, 0.1]:
-#         for num_leaves in [32, 64]:
-#             for path_smooth in [0.1, 0.5]:
-#                 params_lgb = {
-#                     'metric': 'logloss',
-#                     'random_state': 1,
-#                     'verbose': 0,
-#                     'n_estimators': n_estimators,
-#                     'learning_rate': learning_rate,
-#                     'num_leaves': num_leaves,
-#                     'path_smooth': path_smooth
-#                 }
+for n_estimators in [50, 100]:
+    for learning_rate in [0.01, 0.1]:
+        for num_leaves in [32, 64]:
+            for path_smooth in [0.1, 0.5]:
+                params_lgb = {
+                    'metric': 'logloss',
+                    'random_state': 1,
+                    'verbose': 0,
+                    'n_estimators': n_estimators,
+                    'learning_rate': learning_rate,
+                    'num_leaves': num_leaves,
+                    'path_smooth': path_smooth
+                }
                 
-#                 models_list = {}
-#                 results_list = {}
-#                 predictions_list = {}
-#                 compute_importance = True
-#                 permut_importances_list = {}
-#                 categorical_features = ['new_sector']
+                models_list = {}
+                results_list = {}
+                predictions_list = {}
+                compute_importance = True
+                permut_importances_list = {}
+                categorical_features = ['new_sector']
 
-#                 for i in range(len(datasets)):
-#                     test_quarter = unique_quarters[i + window_size]
-#                     #print(f"Training model to test quarter: {test_quarter}")
+                for i in range(len(datasets)):
+                    test_quarter = unique_quarters[i + window_size]
+                    #print(f"Training model to test quarter: {test_quarter}")
 
-#                     X_train, y_train, X_test, y_test = datasets[unique_quarters[i+window_size]]
+                    X_train, y_train, X_test, y_test = datasets[unique_quarters[i+window_size]]
 
-#                     eval_result = {}
+                    eval_result = {}
 
-#                     model = lgb.LGBMClassifier(**params_lgb)
+                    model = lgb.LGBMClassifier(**params_lgb)
 
-#                     model.fit(
-#                         X_train, y_train,
-#                         categorical_feature=categorical_features,
-#                         eval_set=[(X_test, y_test), (X_train, y_train)],
-#                         eval_metric='logloss',
-#                         callbacks=[lgb.record_evaluation(eval_result=eval_result)]
-#                     )
+                    model.fit(
+                        X_train, y_train,
+                        categorical_feature=categorical_features,
+                        eval_set=[(X_test, y_test), (X_train, y_train)],
+                        eval_metric='logloss',
+                        callbacks=[lgb.record_evaluation(eval_result=eval_result)]
+                    )
                     
-#                     results_list[(test_quarter)] = eval_result
+                    results_list[(test_quarter)] = eval_result
 
 
-#                 test_lc = return_learning_curve(results_list,"valid_0")
-#                 train_lc = return_learning_curve(results_list,"training")
+                test_lc = return_learning_curve(results_list,"valid_0")
+                train_lc = return_learning_curve(results_list,"training")
 
-#                 train_lc['n_trees_cat'] = pd.Categorical(train_lc['n_trees'], categories=sorted(train_lc['n_trees'].unique()))
-#                 test_lc['n_trees_cat'] = pd.Categorical(test_lc['n_trees'], categories=sorted(test_lc['n_trees'].unique()))
+                train_lc['n_trees_cat'] = pd.Categorical(train_lc['n_trees'], categories=sorted(train_lc['n_trees'].unique()))
+                test_lc['n_trees_cat'] = pd.Categorical(test_lc['n_trees'], categories=sorted(test_lc['n_trees'].unique()))
 
 
 
-#                 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 6))
+                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 6))
 
-#                 sns.boxplot(data=train_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue', ax=ax1)
-#                 ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-#                 ax1.set_title('Training Learning Curve')
+                sns.boxplot(data=train_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue', ax=ax1)
+                ax1.hlines(0, 0, len(train_lc['n_trees'].unique()), color='red', linestyle='--')
+                ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
+                ax1.set_title('Training Learning Curve')
 
-#                 sns.boxplot(data=test_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue', ax=ax2)
-#                 ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
-#                 ax2.set_title('Test Learning Curve')
+                sns.boxplot(data=test_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue', ax=ax2)
+                ax2.hlines(0, 0, len(test_lc['n_trees'].unique()), color='red', linestyle='--')
+                ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
+                ax2.set_title('Test Learning Curve')
 
-#                 plt.suptitle(f'Learning Curves with n_est={n_estimators},lr={learning_rate},n_leaves={num_leaves},path={path_smooth}', fontsize=16, y=1.02)
+                plt.suptitle(f'Learning Curves with n_est={n_estimators},lr={learning_rate},n_leaves={num_leaves},path={path_smooth}', fontsize=16, y=1.02)
 
-#                 plt.tight_layout()  
-#                 plt.savefig(f'./data/learning_curves/lc_{n_estimators}_{learning_rate}_{num_leaves}_{path_smooth}.png',dpi=300, bbox_inches='tight')
-#                 plt.show()
+                plt.tight_layout()  
+                plt.savefig(f'./data/learning_curves/lc_{n_estimators}_{learning_rate}_{num_leaves}_{path_smooth}.png',dpi=300, bbox_inches='tight')
+                plt.show()
 ```
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -345,9 +347,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -357,9 +359,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -369,9 +371,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -381,9 +383,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -393,9 +395,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -405,9 +407,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -417,9 +419,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -429,9 +431,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -441,9 +443,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -453,9 +455,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -465,9 +467,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -477,9 +479,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -489,9 +491,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -501,9 +503,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -513,9 +515,9 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:65: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_25956\1252130185.py:69: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:72: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
       ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
     
 
@@ -525,7 +527,7 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
     
 
 
-After comparing the learning curves, we choose the model with Lr = 0.01, n_leaves = 64, path_smooth = 0.1, and n_estimators = 100.
+After comparing the learning curves, we choose the model with Lr = 0.01, n_leaves = 64, path_smooth = 0.1 or 0.5, and n_estimators = 100.
 
 
 ```python
@@ -537,7 +539,7 @@ params_lgb = {
     'n_estimators': 100,
     'learning_rate': 0.01,
     'num_leaves': 64,
-    'path_smooth': 0.1
+    'path_smooth': 0.5
 }
 
 
@@ -662,6 +664,7 @@ plt.show()
 ```python
 plt.subplots(figsize=(15, 6))
 sns.boxplot(data=test_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue')
+plt.hlines(0, 0, len(test_lc['n_trees'].unique()), color='red', linestyle='--')
 plt.xticks(rotation=45, fontsize=8)
 plt.title('Test Learning Curve')
 plt.show()
@@ -678,6 +681,7 @@ plt.show()
 plt.subplots(figsize=(15, 6))
 sns.boxplot(data=train_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue', label='Training')
 sns.boxplot(data=test_lc, x='n_trees_cat', y='norm_binary_logloss', color='red', label='Test')
+plt.hlines(0, 0, len(test_lc['n_trees'].unique()), color='black', linestyle='--')
 plt.xticks(rotation=45, fontsize=8)
 plt.title('Training Learning Curve vs Test Learning Curve')
 plt.legend()
@@ -734,31 +738,31 @@ df_importances
   <tbody>
     <tr>
       <th>0</th>
-      <td>0.021206</td>
+      <td>0.039092</td>
       <td>dil_shares</td>
       <td>2011Q1</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>0.027507</td>
+      <td>0.050881</td>
       <td>new_sector</td>
       <td>2011Q1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>-0.003184</td>
+      <td>0.016870</td>
       <td>ebit_marg</td>
       <td>2011Q1</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>-0.009350</td>
+      <td>0.018225</td>
       <td>ebitda_marg</td>
       <td>2011Q1</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>0.000136</td>
+      <td>0.013753</td>
       <td>net_marg</td>
       <td>2011Q1</td>
     </tr>
@@ -770,31 +774,31 @@ df_importances
     </tr>
     <tr>
       <th>1066</th>
-      <td>0.001815</td>
+      <td>0.001613</td>
       <td>P_B_ratio</td>
       <td>2023Q3</td>
     </tr>
     <tr>
       <th>1067</th>
-      <td>0.004435</td>
+      <td>0.007392</td>
       <td>Debt_to_Equity</td>
       <td>2023Q3</td>
     </tr>
     <tr>
       <th>1068</th>
-      <td>0.005780</td>
+      <td>-0.000336</td>
       <td>Net_Debt_to_EBITDA</td>
       <td>2023Q3</td>
     </tr>
     <tr>
       <th>1069</th>
-      <td>0.011089</td>
+      <td>0.006653</td>
       <td>Asset_Turnover</td>
       <td>2023Q3</td>
     </tr>
     <tr>
       <th>1070</th>
-      <td>0.008871</td>
+      <td>0.005578</td>
       <td>Cash_Conversion_Ratio</td>
       <td>2023Q3</td>
     </tr>
@@ -849,5 +853,192 @@ plt.show()
 
     
 ![png](training_data_binary_files/training_data_binary_27_0.png)
+    
+
+
+### Comparing predictions with SP500
+
+
+```python
+def create_results_df(predictions: dict,quarter:str,sector:str=False, versus_sp500:bool = True ) -> pd.DataFrame:
+    assets = df_final[df_final['quarter'] == quarter]['asset_num']
+    df = pd.DataFrame(assets).reset_index(drop=True)
+    df['prediction'] = predictions[quarter]
+    df['asset_num'] = assets.values
+    df['rank_pos'] = df['prediction'].rank(ascending=False)
+    df['rank_neg'] = df['prediction'].rank(ascending=True)
+    if versus_sp500:
+        df = df.merge(df_final[df_final['quarter'] == quarter][['asset_num','asset_return_gt_sp500','asset_return_diff_sp500']], on='asset_num')
+    else:
+        df = df.merge(df_final[df_final['quarter'] == quarter][['asset_num','1year_price_variation','1year_sp500_return']], on='asset_num')    
+    if sector:
+        df = df.merge(df_final[df_final['quarter'] == quarter][['asset_num','Baseline','new_sector']], on='asset_num')
+    else:
+        df = df.merge(df_final[df_final['quarter'] == quarter][['asset_num','Baseline']], on='asset_num')
+    return df
+```
+
+
+```python
+def equitative_return(df:pd.DataFrame, n:int) -> pd.DataFrame:
+    df = df.sort_values('rank_pos', ascending=False).head(n)
+    return df['asset_return_diff_sp500'].mean()
+```
+
+
+```python
+def calculate_returns(sector_df:str=False,n_assets:int = 20) -> pd.DataFrame:
+    prediction_returns_eq = []
+    baseline_returns = []
+    sector_returns = []
+    sector_list = []
+    quarter_list = []
+    for i in range(len(datasets)):
+        quarter = unique_quarters[i+window_size] 
+        if sector_df:
+            df = create_results_df(predictions_list, quarter,True)
+            for sector in df['new_sector'].unique():
+                df_sector = df[df['new_sector'] == sector]
+                return_sector = df_sector['asset_return_diff_sp500'].mean()
+                sector_returns.append(return_sector)
+                sector_list.append(sector)
+                return_prediction_equitative = equitative_return(df_sector, n_assets)
+                prediction_returns_eq.append(return_prediction_equitative- return_sector)
+                return_baseline = df_sector.sort_values('Baseline', ascending=False).head(n_assets)['asset_return_diff_sp500'].mean()
+                baseline_returns.append(return_baseline- return_sector)
+                
+                quarter_list.append(quarter)
+        else:
+            df = create_results_df(predictions_list, quarter)
+            return_prediction_equitative = equitative_return(df, n_assets)
+            return_baseline = df.sort_values('Baseline', ascending=False).head(n_assets)['asset_return_diff_sp500'].mean()
+            prediction_returns_eq.append(return_prediction_equitative)
+            baseline_returns.append(return_baseline)
+    
+    if sector_df:
+        return pd.DataFrame({'quarter': quarter_list, 'sector': sector_list,
+                         'prediction_return_equitative': prediction_returns_eq,  
+                         'baseline_return': baseline_returns, 'sector_return': sector_returns})
+    else: 
+        return pd.DataFrame({'quarter': unique_quarters[window_size:], 
+                         'prediction_return_equitative': prediction_returns_eq,  
+                         'baseline_return': baseline_returns})
+```
+
+
+```python
+n_assets = 20
+df_returns_quarters = calculate_returns(n_assets=n_assets)
+```
+
+At the graph, we can see for each quarter the difference between the return of the prediction and the return of the SP500. We take also the difference between Baseline and SP500 to compare with the prediction model.
+
+
+```python
+plt.subplots(figsize=(15, 6))
+sns.scatterplot(data=df_returns_quarters, x='quarter', y='prediction_return_equitative',label='Prediction')
+sns.scatterplot(data=df_returns_quarters, x='quarter', y='baseline_return',label='Baseline')
+plt.axhline(y=0.0, color='r', linestyle='--', label='SP500')
+plt.title(f'Return diff to SP500 by quarter with {n_assets} assets')
+plt.ylabel('Return')
+plt.xticks(rotation=90, fontsize=6)
+plt.legend()
+plt.show()
+```
+
+
+    
+![png](training_data_binary_files/training_data_binary_34_0.png)
+    
+
+
+### Comparing predictions versus the return of the market for each sector
+
+For each quarter, and sector, we will calculate the return of the model for the top 20 assets compared to the return of the sector
+
+
+```python
+n_assets = 20
+sector_returns = calculate_returns(sector_df=True,n_assets=n_assets)
+```
+
+
+```python
+for sector in sector_returns['sector'].unique():
+    df_sector = sector_returns[sector_returns['sector'] == sector]
+    plt.subplots(figsize=(15, 6))
+    sns.scatterplot(data=df_sector, x='quarter', y='prediction_return_equitative',label='Prediction')
+    sns.scatterplot(data=df_sector, x='quarter', y='baseline_return',label='Baseline')
+    plt.axhline(y=0.0, color='r', linestyle='--', label=sector)
+    plt.title(f'Return diff to the sector by quarter with {n_assets} assets for {sector}')
+    plt.ylabel('Return')
+    plt.xticks(rotation=90, fontsize=6)
+    plt.legend()
+    plt.show()
+```
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_0.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_1.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_2.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_3.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_4.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_5.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_6.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_7.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_8.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_9.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_38_10.png)
     
 
