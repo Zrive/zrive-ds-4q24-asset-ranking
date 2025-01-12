@@ -20,7 +20,6 @@ df_final = pd.read_feather("./data/final_data.feather")
 ```python
 df_final['1year_price_variation'] = (df_final['1year_price'] - df_final['prices_avg']) / df_final['prices_avg']
 df_final['Baseline'] = df_final.groupby('asset_num')['1year_price_variation'].shift(4)
-#df_final['1quarter_price_variation'] = df_final.groupby('asset_num')['prices_avg'].pct_change(1)
 ```
 
 
@@ -37,7 +36,7 @@ sp500 = calculate_sp500_return()
 sp500.head()
 ```
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\3137064614.py:4: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns. This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_18168\3137064614.py:4: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns. This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
       sp500 = sp500.groupby('date').apply(lambda group: group.loc[group['date'].idxmax()]).reset_index(drop=True)
     
 
@@ -122,8 +121,28 @@ df_final['Cash_Conversion_Ratio'] = df_final['cash'] / df_final['T_rev']
 
 
 ```python
-irrelevant_features = ['cap_ex', 'cash', 'ebit', 'ebitda', 'net_inc', 'T_assets', 'T_debt', 'T_rev']
-df_final = df_final.drop(columns=irrelevant_features, errors='ignore')
+def calculate_mean_performance_sector(df: pd.DataFrame,features) -> pd.DataFrame:
+    for feature in features:
+        df[feature+'_mean_sector'] = df.groupby(['quarter','sector'])[feature].transform('mean')
+        df[feature+'_mean_sector_diff'] = df[feature] - df[feature+'_mean_sector']
+        df.drop(columns=[feature+'_mean_sector'],inplace=True)
+    return df
+```
+
+
+```python
+sector_performance_cols = ['EV_EBITDA', 'EV_EBIT', 'P_B_ratio', 'Debt_to_Equity', 'Net_Debt_to_EBITDA', 'Asset_Turnover', 'Cash_Conversion_Ratio']
+```
+
+
+```python
+df_final = calculate_mean_performance_sector(df_final, sector_performance_cols)
+```
+
+
+```python
+basic_features = ['cap_ex', 'cash', 'ebit', 'ebitda', 'net_inc', 'T_assets', 'T_debt', 'T_rev','dil_shares','net_debt','ev']
+df_final = df_final.drop(columns=basic_features, errors='ignore')
 
 # Handle missing or infinite values
 df_final.replace([np.inf, -np.inf], np.nan, inplace=True)
@@ -139,27 +158,31 @@ feature_cols = [col for col in df_final.columns if col not in info_cols + [targe
 print(df_final[feature_cols].isna().sum())
 ```
 
-    dil_shares                245
-    new_sector                  0
-    ebit_marg                2541
-    ebitda_marg              2590
-    net_marg                  352
-    ROA                       363
-    ROE                       363
-    debts_assets              354
-    net_debt                  388
-    cash_ratio               1496
-    net_income_per_share      498
-    price_earning_ratio       499
-    ev                        537
-    Baseline                 1524
-    EV_EBITDA                2766
-    EV_EBIT                  2719
-    P_B_ratio                 354
-    Debt_to_Equity            354
-    Net_Debt_to_EBITDA       2632
-    Asset_Turnover            363
-    Cash_Conversion_Ratio     397
+    new_sector                                   0
+    ebit_marg                                 2741
+    ebitda_marg                               2796
+    net_marg                                   387
+    ROA                                        405
+    ROE                                        405
+    debts_assets                               396
+    cash_ratio                                1673
+    net_income_per_share                       564
+    price_earning_ratio                        565
+    Baseline                                  3455
+    EV_EBITDA                                 3007
+    EV_EBIT                                   2954
+    P_B_ratio                                  396
+    Debt_to_Equity                             396
+    Net_Debt_to_EBITDA                        2846
+    Asset_Turnover                             405
+    Cash_Conversion_Ratio                      440
+    EV_EBITDA_mean_sector_diff                3007
+    EV_EBIT_mean_sector_diff                  2954
+    P_B_ratio_mean_sector_diff                 396
+    Debt_to_Equity_mean_sector_diff            396
+    Net_Debt_to_EBITDA_mean_sector_diff       2846
+    Asset_Turnover_mean_sector_diff            405
+    Cash_Conversion_Ratio_mean_sector_diff     440
     dtype: int64
     
 
@@ -224,7 +247,7 @@ def prepare_train_test_data(dataset: pd.DataFrame, quarters_col: str, features: 
 
 
 ```python
-window_size = 20
+window_size = 12
 datasets = prepare_train_test_data(df_final, 'quarter', feature_cols, target_col, window_size=window_size)
 ```
 
@@ -255,84 +278,84 @@ def return_learning_curve(results:dict, set_:str) -> pd.DataFrame:
 
 ```python
 # This code is commented to avoid running it by mistake but it is left here to show the results
-params_lgb = {
-    'metric': 'logloss',
-    'random_state': 1,
-    'verbose': 0,
-    'n_estimators': 50,
-    'learning_rate': 0.01,
-    'num_leaves': 32,
-    'path_smooth': 0.1
-}
+# params_lgb = {
+#     'metric': 'logloss',
+#     'random_state': 1,
+#     'verbose': 0,
+#     'n_estimators': 50,
+#     'learning_rate': 0.01,
+#     'num_leaves': 32,
+#     'path_smooth': 0.1
+# }
 
 
-for n_estimators in [50, 100]:
-    for learning_rate in [0.01, 0.1]:
-        for num_leaves in [32, 64]:
-            for path_smooth in [0.1, 0.5]:
-                params_lgb = {
-                    'metric': 'logloss',
-                    'random_state': 1,
-                    'verbose': 0,
-                    'n_estimators': n_estimators,
-                    'learning_rate': learning_rate,
-                    'num_leaves': num_leaves,
-                    'path_smooth': path_smooth
-                }
+# for n_estimators in [50, 100]:
+#     for learning_rate in [0.01, 0.1]:
+#         for num_leaves in [32, 64]:
+#             for path_smooth in [0.1, 0.5]:
+#                 params_lgb = {
+#                     'metric': 'logloss',
+#                     'random_state': 1,
+#                     'verbose': 0,
+#                     'n_estimators': n_estimators,
+#                     'learning_rate': learning_rate,
+#                     'num_leaves': num_leaves,
+#                     'path_smooth': path_smooth
+#                 }
                 
-                models_list = {}
-                results_list = {}
-                predictions_list = {}
-                compute_importance = True
-                permut_importances_list = {}
-                categorical_features = ['new_sector']
+#                 models_list = {}
+#                 results_list = {}
+#                 predictions_list = {}
+#                 compute_importance = True
+#                 permut_importances_list = {}
+#                 categorical_features = ['new_sector']
 
-                for i in range(len(datasets)):
-                    test_quarter = unique_quarters[i + window_size]
-                    #print(f"Training model to test quarter: {test_quarter}")
+#                 for i in range(len(datasets)):
+#                     test_quarter = unique_quarters[i + window_size]
+#                     #print(f"Training model to test quarter: {test_quarter}")
 
-                    X_train, y_train, X_test, y_test = datasets[unique_quarters[i+window_size]]
+#                     X_train, y_train, X_test, y_test = datasets[unique_quarters[i+window_size]]
 
-                    eval_result = {}
+#                     eval_result = {}
 
-                    model = lgb.LGBMClassifier(**params_lgb)
+#                     model = lgb.LGBMClassifier(**params_lgb)
 
-                    model.fit(
-                        X_train, y_train,
-                        categorical_feature=categorical_features,
-                        eval_set=[(X_test, y_test), (X_train, y_train)],
-                        eval_metric='logloss',
-                        callbacks=[lgb.record_evaluation(eval_result=eval_result)]
-                    )
+#                     model.fit(
+#                         X_train, y_train,
+#                         categorical_feature=categorical_features,
+#                         eval_set=[(X_test, y_test), (X_train, y_train)],
+#                         eval_metric='logloss',
+#                         callbacks=[lgb.record_evaluation(eval_result=eval_result)]
+#                     )
                     
-                    results_list[(test_quarter)] = eval_result
+#                     results_list[(test_quarter)] = eval_result
 
 
-                test_lc = return_learning_curve(results_list,"valid_0")
-                train_lc = return_learning_curve(results_list,"training")
+#                 test_lc = return_learning_curve(results_list,"valid_0")
+#                 train_lc = return_learning_curve(results_list,"training")
 
-                train_lc['n_trees_cat'] = pd.Categorical(train_lc['n_trees'], categories=sorted(train_lc['n_trees'].unique()))
-                test_lc['n_trees_cat'] = pd.Categorical(test_lc['n_trees'], categories=sorted(test_lc['n_trees'].unique()))
+#                 train_lc['n_trees_cat'] = pd.Categorical(train_lc['n_trees'], categories=sorted(train_lc['n_trees'].unique()))
+#                 test_lc['n_trees_cat'] = pd.Categorical(test_lc['n_trees'], categories=sorted(test_lc['n_trees'].unique()))
 
 
 
-                fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 6))
+#                 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 6))
 
-                sns.boxplot(data=train_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue', ax=ax1)
-                ax1.hlines(0, 0, len(train_lc['n_trees'].unique()), color='red', linestyle='--')
-                ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
-                ax1.set_title('Training Learning Curve')
+#                 sns.boxplot(data=train_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue', ax=ax1)
+#                 ax1.hlines(0, 0, len(train_lc['n_trees'].unique()), color='red', linestyle='--')
+#                 ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, fontsize=8)
+#                 ax1.set_title('Training Learning Curve')
 
-                sns.boxplot(data=test_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue', ax=ax2)
-                ax2.hlines(0, 0, len(test_lc['n_trees'].unique()), color='red', linestyle='--')
-                ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
-                ax2.set_title('Test Learning Curve')
+#                 sns.boxplot(data=test_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue', ax=ax2)
+#                 ax2.hlines(0, 0, len(test_lc['n_trees'].unique()), color='red', linestyle='--')
+#                 ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, fontsize=8)
+#                 ax2.set_title('Test Learning Curve')
 
-                plt.suptitle(f'Learning Curves with n_est={n_estimators},lr={learning_rate},n_leaves={num_leaves},path={path_smooth}', fontsize=16, y=1.02)
+#                 plt.suptitle(f'Learning Curves with n_est={n_estimators},lr={learning_rate},n_leaves={num_leaves},path={path_smooth}', fontsize=16, y=1.02)
 
-                plt.tight_layout()  
-                plt.savefig(f'./data/learning_curves/lc_{n_estimators}_{learning_rate}_{num_leaves}_{path_smooth}.png',dpi=300, bbox_inches='tight')
-                plt.show()
+#                 plt.tight_layout()  
+#                 plt.savefig(f'./data/learning_curves/lc_{n_estimators}_{learning_rate}_{num_leaves}_{path_smooth}.png',dpi=300, bbox_inches='tight')
+#                 plt.show()
 ```
 
     C:\Users\ALEX\AppData\Local\Temp\ipykernel_20324\844387219.py:67: UserWarning: set_ticklabels() should only be used with a fixed number of ticks, i.e. after set_ticks() or using a FixedLocator.
@@ -343,7 +366,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_1.png)
+![png](training_data_binary_files/training_data_binary_20_1.png)
     
 
 
@@ -355,7 +378,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_3.png)
+![png](training_data_binary_files/training_data_binary_20_3.png)
     
 
 
@@ -367,7 +390,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_5.png)
+![png](training_data_binary_files/training_data_binary_20_5.png)
     
 
 
@@ -379,7 +402,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_7.png)
+![png](training_data_binary_files/training_data_binary_20_7.png)
     
 
 
@@ -391,7 +414,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_9.png)
+![png](training_data_binary_files/training_data_binary_20_9.png)
     
 
 
@@ -403,7 +426,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_11.png)
+![png](training_data_binary_files/training_data_binary_20_11.png)
     
 
 
@@ -415,7 +438,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_13.png)
+![png](training_data_binary_files/training_data_binary_20_13.png)
     
 
 
@@ -427,7 +450,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_15.png)
+![png](training_data_binary_files/training_data_binary_20_15.png)
     
 
 
@@ -439,7 +462,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_17.png)
+![png](training_data_binary_files/training_data_binary_20_17.png)
     
 
 
@@ -451,7 +474,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_19.png)
+![png](training_data_binary_files/training_data_binary_20_19.png)
     
 
 
@@ -463,7 +486,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_21.png)
+![png](training_data_binary_files/training_data_binary_20_21.png)
     
 
 
@@ -475,7 +498,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_23.png)
+![png](training_data_binary_files/training_data_binary_20_23.png)
     
 
 
@@ -487,7 +510,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_25.png)
+![png](training_data_binary_files/training_data_binary_20_25.png)
     
 
 
@@ -499,7 +522,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_27.png)
+![png](training_data_binary_files/training_data_binary_20_27.png)
     
 
 
@@ -511,7 +534,7 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_29.png)
+![png](training_data_binary_files/training_data_binary_20_29.png)
     
 
 
@@ -523,11 +546,56 @@ for n_estimators in [50, 100]:
 
 
     
-![png](training_data_binary_files/training_data_binary_17_31.png)
+![png](training_data_binary_files/training_data_binary_20_31.png)
     
 
 
 After comparing the learning curves, we choose the model with Lr = 0.01, n_leaves = 64, path_smooth = 0.1 or 0.5, and n_estimators = 100.
+
+
+```python
+def get_weighted_performance_of_stocks(df,metric):
+    df["norm_prob"] = 1/len(df)
+    return np.sum(df["norm_prob"]*df[metric])
+
+def top_wt_performance(y_true, y_pred, X_train, X_test,quarter,df_final):
+    if len(y_pred) == len(X_train):
+        dataset = X_train.copy()
+    elif len(y_pred) == len(X_test):
+        dataset = X_test.copy()
+    else:
+        raise ValueError("Predictions length doesn't match train or test set.")
+
+    dataset["prob"] = y_pred
+    assets = df_final[df_final['quarter'] == quarter]['asset_num'].reset_index(drop=True)
+    dataset = dataset.reset_index(drop=True)
+    dataset['asset_num'] = assets  
+    dataset['quarter'] = quarter
+    dataset = dataset.sort_values(["prob"], ascending=False).head(20)
+
+    
+    df_filtered = df_final[df_final['quarter'] == quarter]
+    merged_df = dataset.merge(
+        df_filtered[['asset_num', 'quarter', 'asset_return_diff_sp500']],
+        on=['asset_num', 'quarter'],
+        how='left'
+    )
+
+    weighted_return = get_weighted_performance_of_stocks(merged_df, "asset_return_diff_sp500")
+
+    return "weighted-return", weighted_return, True
+
+
+
+from functools import partial
+
+def make_custom_metric(X_train, X_test, quarter, df_final):
+    # Envolver la métrica para que acepte solo y_true y y_pred
+    def metric(y_true, y_pred):
+        return top_wt_performance(y_true, y_pred, X_train, X_test, quarter, df_final)
+
+    return metric
+```
 
 
 ```python
@@ -557,6 +625,9 @@ for i in range(len(datasets)):
     
     X_train, y_train, X_test, y_test = datasets[unique_quarters[i+window_size]]
     
+    custom_metric = make_custom_metric(X_train,X_test,test_quarter, df_final)
+
+    
     eval_result = {}
     
     model = lgb.LGBMClassifier(**params_lgb)
@@ -570,7 +641,7 @@ for i in range(len(datasets)):
     )
     
     if compute_importance:
-        r = permutation_importance(model, X_test, y_test, n_repeats=30, random_state=0)
+        r = permutation_importance(model, X_test, y_test, n_repeats=15, random_state=0)
         feature_names = X_test.columns
         df_permutation_importance = pd.DataFrame({'importance': r.importances_mean, 'feature': feature_names})
     else:
@@ -583,6 +654,14 @@ for i in range(len(datasets)):
     permut_importances_list[(test_quarter)] = df_permutation_importance
 ```
 
+    Training model to test quarter: 2009Q1
+    Training model to test quarter: 2009Q2
+    Training model to test quarter: 2009Q3
+    Training model to test quarter: 2009Q4
+    Training model to test quarter: 2010Q1
+    Training model to test quarter: 2010Q2
+    Training model to test quarter: 2010Q3
+    Training model to test quarter: 2010Q4
     Training model to test quarter: 2011Q1
     Training model to test quarter: 2011Q2
     Training model to test quarter: 2011Q3
@@ -649,6 +728,7 @@ test_lc['n_trees_cat'] = pd.Categorical(test_lc['n_trees'], categories=sorted(te
 ```python
 plt.subplots(figsize=(15, 6))
 sns.boxplot(data=train_lc, x='n_trees_cat', y='norm_binary_logloss', color='blue')
+plt.hlines(0, 0, len(test_lc['n_trees'].unique()), color='red', linestyle='--')
 plt.xticks(rotation=45, fontsize=8)
 plt.title('Training Learning Curve')
 plt.show()
@@ -656,7 +736,7 @@ plt.show()
 
 
     
-![png](training_data_binary_files/training_data_binary_21_0.png)
+![png](training_data_binary_files/training_data_binary_25_0.png)
     
 
 
@@ -672,7 +752,7 @@ plt.show()
 
 
     
-![png](training_data_binary_files/training_data_binary_22_0.png)
+![png](training_data_binary_files/training_data_binary_26_0.png)
     
 
 
@@ -690,7 +770,7 @@ plt.show()
 
 
     
-![png](training_data_binary_files/training_data_binary_23_0.png)
+![png](training_data_binary_files/training_data_binary_27_0.png)
     
 
 
@@ -738,33 +818,33 @@ df_importances
   <tbody>
     <tr>
       <th>0</th>
-      <td>0.039092</td>
-      <td>dil_shares</td>
-      <td>2011Q1</td>
+      <td>-6.612686e-03</td>
+      <td>new_sector</td>
+      <td>2009Q1</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>0.050881</td>
-      <td>new_sector</td>
-      <td>2011Q1</td>
+      <td>-1.349528e-03</td>
+      <td>ebit_marg</td>
+      <td>2009Q1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>0.016870</td>
-      <td>ebit_marg</td>
-      <td>2011Q1</td>
+      <td>3.700743e-17</td>
+      <td>ebitda_marg</td>
+      <td>2009Q1</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>0.018225</td>
-      <td>ebitda_marg</td>
-      <td>2011Q1</td>
+      <td>-2.699055e-04</td>
+      <td>net_marg</td>
+      <td>2009Q1</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>0.013753</td>
-      <td>net_marg</td>
-      <td>2011Q1</td>
+      <td>-2.699055e-04</td>
+      <td>ROA</td>
+      <td>2009Q1</td>
     </tr>
     <tr>
       <th>...</th>
@@ -773,38 +853,38 @@ df_importances
       <td>...</td>
     </tr>
     <tr>
-      <th>1066</th>
-      <td>0.001613</td>
-      <td>P_B_ratio</td>
+      <th>1470</th>
+      <td>8.333333e-03</td>
+      <td>P_B_ratio_mean_sector_diff</td>
       <td>2023Q3</td>
     </tr>
     <tr>
-      <th>1067</th>
-      <td>0.007392</td>
-      <td>Debt_to_Equity</td>
+      <th>1471</th>
+      <td>8.736559e-03</td>
+      <td>Debt_to_Equity_mean_sector_diff</td>
       <td>2023Q3</td>
     </tr>
     <tr>
-      <th>1068</th>
-      <td>-0.000336</td>
-      <td>Net_Debt_to_EBITDA</td>
+      <th>1472</th>
+      <td>3.360215e-03</td>
+      <td>Net_Debt_to_EBITDA_mean_sector_diff</td>
       <td>2023Q3</td>
     </tr>
     <tr>
-      <th>1069</th>
-      <td>0.006653</td>
-      <td>Asset_Turnover</td>
+      <th>1473</th>
+      <td>2.220446e-17</td>
+      <td>Asset_Turnover_mean_sector_diff</td>
       <td>2023Q3</td>
     </tr>
     <tr>
-      <th>1070</th>
-      <td>0.005578</td>
-      <td>Cash_Conversion_Ratio</td>
+      <th>1474</th>
+      <td>2.419355e-03</td>
+      <td>Cash_Conversion_Ratio_mean_sector_diff</td>
       <td>2023Q3</td>
     </tr>
   </tbody>
 </table>
-<p>1071 rows × 3 columns</p>
+<p>1475 rows × 3 columns</p>
 </div>
 
 
@@ -821,7 +901,7 @@ plt.show()
 
 
     
-![png](training_data_binary_files/training_data_binary_25_0.png)
+![png](training_data_binary_files/training_data_binary_29_0.png)
     
 
 
@@ -852,7 +932,7 @@ plt.show()
 
 
     
-![png](training_data_binary_files/training_data_binary_27_0.png)
+![png](training_data_binary_files/training_data_binary_31_0.png)
     
 
 
@@ -860,17 +940,15 @@ plt.show()
 
 
 ```python
-def create_results_df(predictions: dict,quarter:str,sector:str=False, versus_sp500:bool = True ) -> pd.DataFrame:
+def create_results_df(predictions: dict,quarter:str,sector:bool=False, column:str='asset_return_diff_sp500') -> pd.DataFrame:
     assets = df_final[df_final['quarter'] == quarter]['asset_num']
     df = pd.DataFrame(assets).reset_index(drop=True)
     df['prediction'] = predictions[quarter]
     df['asset_num'] = assets.values
     df['rank_pos'] = df['prediction'].rank(ascending=False)
     df['rank_neg'] = df['prediction'].rank(ascending=True)
-    if versus_sp500:
-        df = df.merge(df_final[df_final['quarter'] == quarter][['asset_num','asset_return_gt_sp500','asset_return_diff_sp500']], on='asset_num')
-    else:
-        df = df.merge(df_final[df_final['quarter'] == quarter][['asset_num','1year_price_variation','1year_sp500_return']], on='asset_num')    
+    df = df.merge(df_final[df_final['quarter'] == quarter][['asset_num','asset_return_gt_sp500',column]], on='asset_num')
+   
     if sector:
         df = df.merge(df_final[df_final['quarter'] == quarter][['asset_num','Baseline','new_sector']], on='asset_num')
     else:
@@ -880,14 +958,14 @@ def create_results_df(predictions: dict,quarter:str,sector:str=False, versus_sp5
 
 
 ```python
-def equitative_return(df:pd.DataFrame, n:int) -> pd.DataFrame:
+def equitative_return(df:pd.DataFrame, n:int,column:str='asset_return_diff_sp500') -> pd.DataFrame:
     df = df.sort_values('rank_pos', ascending=False).head(n)
-    return df['asset_return_diff_sp500'].mean()
+    return df[column].mean()
 ```
 
 
 ```python
-def calculate_returns(sector_df:str=False,n_assets:int = 20) -> pd.DataFrame:
+def calculate_returns(sector_df:bool=False,n_assets:int = 20,column:str='asset_return_diff_sp500') -> pd.DataFrame:
     prediction_returns_eq = []
     baseline_returns = []
     sector_returns = []
@@ -896,22 +974,22 @@ def calculate_returns(sector_df:str=False,n_assets:int = 20) -> pd.DataFrame:
     for i in range(len(datasets)):
         quarter = unique_quarters[i+window_size] 
         if sector_df:
-            df = create_results_df(predictions_list, quarter,True)
+            df = create_results_df(predictions_list, quarter,True,column)
             for sector in df['new_sector'].unique():
                 df_sector = df[df['new_sector'] == sector]
-                return_sector = df_sector['asset_return_diff_sp500'].mean()
+                return_sector = df_sector[column].mean()
                 sector_returns.append(return_sector)
                 sector_list.append(sector)
-                return_prediction_equitative = equitative_return(df_sector, n_assets)
-                prediction_returns_eq.append(return_prediction_equitative- return_sector)
-                return_baseline = df_sector.sort_values('Baseline', ascending=False).head(n_assets)['asset_return_diff_sp500'].mean()
-                baseline_returns.append(return_baseline- return_sector)
+                return_prediction_equitative = equitative_return(df_sector, n_assets,column=column)
+                prediction_returns_eq.append(return_prediction_equitative)
+                return_baseline = df_sector.sort_values('Baseline', ascending=False).head(n_assets)[column].mean()
+                baseline_returns.append(return_baseline)
                 
                 quarter_list.append(quarter)
         else:
-            df = create_results_df(predictions_list, quarter)
-            return_prediction_equitative = equitative_return(df, n_assets)
-            return_baseline = df.sort_values('Baseline', ascending=False).head(n_assets)['asset_return_diff_sp500'].mean()
+            df = create_results_df(predictions_list, quarter,False,column)
+            return_prediction_equitative = equitative_return(df, n_assets,column)
+            return_baseline = df.sort_values('Baseline', ascending=False).head(n_assets)[column].mean()
             prediction_returns_eq.append(return_prediction_equitative)
             baseline_returns.append(return_baseline)
     
@@ -948,7 +1026,7 @@ plt.show()
 
 
     
-![png](training_data_binary_files/training_data_binary_34_0.png)
+![png](training_data_binary_files/training_data_binary_38_0.png)
     
 
 
@@ -959,7 +1037,7 @@ For each quarter, and sector, we will calculate the return of the model for the 
 
 ```python
 n_assets = 20
-sector_returns = calculate_returns(sector_df=True,n_assets=n_assets)
+sector_returns = calculate_returns(sector_df=True,n_assets=n_assets,column='asset_return_diff_sp500')
 ```
 
 
@@ -979,66 +1057,330 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_data_binary_files/training_data_binary_38_0.png)
+![png](training_data_binary_files/training_data_binary_42_0.png)
     
 
 
 
     
-![png](training_data_binary_files/training_data_binary_38_1.png)
+![png](training_data_binary_files/training_data_binary_42_1.png)
     
 
 
 
     
-![png](training_data_binary_files/training_data_binary_38_2.png)
+![png](training_data_binary_files/training_data_binary_42_2.png)
     
 
 
 
     
-![png](training_data_binary_files/training_data_binary_38_3.png)
+![png](training_data_binary_files/training_data_binary_42_3.png)
     
 
 
 
     
-![png](training_data_binary_files/training_data_binary_38_4.png)
+![png](training_data_binary_files/training_data_binary_42_4.png)
     
 
 
 
     
-![png](training_data_binary_files/training_data_binary_38_5.png)
+![png](training_data_binary_files/training_data_binary_42_5.png)
     
 
 
 
     
-![png](training_data_binary_files/training_data_binary_38_6.png)
+![png](training_data_binary_files/training_data_binary_42_6.png)
     
 
 
 
     
-![png](training_data_binary_files/training_data_binary_38_7.png)
+![png](training_data_binary_files/training_data_binary_42_7.png)
     
 
 
 
     
-![png](training_data_binary_files/training_data_binary_38_8.png)
+![png](training_data_binary_files/training_data_binary_42_8.png)
     
 
 
 
     
-![png](training_data_binary_files/training_data_binary_38_9.png)
+![png](training_data_binary_files/training_data_binary_42_9.png)
     
 
 
 
     
-![png](training_data_binary_files/training_data_binary_38_10.png)
+![png](training_data_binary_files/training_data_binary_42_10.png)
     
+
+
+
+```python
+def acumulative_quarter_return(returns_df:pd.DataFrame, sector:bool=False)->pd.DataFrame:
+    result_df = returns_df.copy()
+    if sector:
+        for column in result_df.columns:
+            for sector in result_df['sector'].unique():
+                dict_quarter = {'Q1':1000,'Q2':1000,'Q3':1000,'Q4':1000}
+                if column not in ['quarter','sector']:
+                    for index, row in result_df.iterrows():
+                        if row['sector'] == sector:
+                            for quarter in dict_quarter:
+                                if quarter in row['quarter']:
+                                    dict_quarter[quarter] += dict_quarter[quarter] * row[column]
+                                    result_df.loc[index,f'cumulative_return_{column}'] = dict_quarter[quarter]
+                                
+     
+    else:
+        for column in result_df.columns: 
+            dict_quarter = {'Q1':1000,'Q2':1000,'Q3':1000,'Q4':1000}
+            if column not in ['quarter','sector']:
+                for index, row in result_df.iterrows():
+                    for quarter in dict_quarter:
+                        if quarter in row['quarter']:
+                            dict_quarter[quarter] += dict_quarter[quarter] * row[column]
+                            result_df.loc[index,f'cumulative_return_{column}'] = dict_quarter[quarter]
+    return result_df
+```
+
+
+```python
+def acumulative_year_earnings(returns_df:pd.DataFrame)->pd.DataFrame:
+    result_df = returns_df.copy()
+    acum_df = pd.DataFrame()
+    unique_years = result_df['quarter'].str[:4].unique()
+    for column in result_df.columns:
+        dict_year = {year:0 for year in unique_years} 
+        if column not in ['quarter','sector']:
+            for index, row in result_df.iterrows():
+                for year in dict_year:
+                    if year in row['quarter']:
+                        dict_year[year] += row[column]
+            acum_df[column] = dict_year.values()
+         
+    acum_df = acum_df.loc[:,acum_df.columns.str.contains('cumulative_return')]
+    acum_df.index = dict_year.keys()
+    return acum_df
+```
+
+
+```python
+n_assets = 20
+sp500['date'] = sp500['date'].astype(str)
+df_returns_quarters = calculate_returns(n_assets=n_assets,
+                                        column='1year_price_variation').merge(sp500,
+                                                                              left_on='quarter', 
+                                                                              right_on='date', how='left').drop(columns='date')
+
+```
+
+
+```python
+acum_returns_by_quarter = acumulative_quarter_return(df_returns_quarters)
+```
+
+
+```python
+for quarter in acum_returns_by_quarter['quarter'].str[4:].unique():
+    plt.subplots(figsize=(15, 6))
+    sns.lineplot(data=acum_returns_by_quarter[acum_returns_by_quarter['quarter'].str.contains(quarter)], x='quarter', y='cumulative_return_prediction_return_equitative',label='Prediction')
+    sns.lineplot(data=acum_returns_by_quarter[acum_returns_by_quarter['quarter'].str.contains(quarter)], x='quarter', y='cumulative_return_baseline_return',label='Baseline')
+    sns.lineplot(data=acum_returns_by_quarter[acum_returns_by_quarter['quarter'].str.contains(quarter)], x='quarter', y='cumulative_return_1year_sp500_return',label='SP500')
+    plt.title(f'Cumulative return by quarter {quarter}')
+    plt.xticks(rotation=90, fontsize=6)
+    plt.ylabel('Return')
+    plt.show()
+```
+
+
+    
+![png](training_data_binary_files/training_data_binary_47_0.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_47_1.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_47_2.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_47_3.png)
+    
+
+
+
+```python
+acumulative_year = acumulative_year_earnings(acum_returns_by_quarter)
+```
+
+
+```python
+plt.figure(figsize=(15, 6))
+sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_prediction_return_equitative',label='Prediction')
+sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_baseline_return',label='Baseline')
+sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_1year_sp500_return',label='SP500')
+plt.title('Cumulative return by year')
+plt.xticks(rotation=90, fontsize=6)
+plt.xlabel('Year')
+plt.ylabel('Acumulative return')
+plt.show()
+```
+
+
+    
+![png](training_data_binary_files/training_data_binary_49_0.png)
+    
+
+
+
+```python
+acumulative_year.iloc[-1]
+```
+
+
+
+
+    cumulative_return_prediction_return_equitative    24270.673072
+    cumulative_return_baseline_return                 21264.221163
+    cumulative_return_1year_sp500_return              23705.718524
+    Name: 2023, dtype: float64
+
+
+
+
+```python
+(acumulative_year['cumulative_return_prediction_return_equitative'] > acumulative_year['cumulative_return_1year_sp500_return']).mean()
+```
+
+
+
+
+    0.8
+
+
+
+
+```python
+sector_quarter_returns = acumulative_quarter_return(sector_returns,sector=True)
+```
+
+
+```python
+for sector in sector_quarter_returns['sector'].unique():
+    sector_acumulative_year = acumulative_year_earnings(sector_quarter_returns[sector_quarter_returns['sector'].str.contains(sector)])
+    plt.subplots(figsize=(15, 6))
+    sns.lineplot(data=sector_acumulative_year, x=sector_acumulative_year.index, y='cumulative_return_prediction_return_equitative',label='Prediction')
+    sns.lineplot(data=sector_acumulative_year, x=sector_acumulative_year.index, y='cumulative_return_baseline_return',label='Baseline')
+    sns.lineplot(data=sector_acumulative_year, x=sector_acumulative_year.index, y='cumulative_return_sector_return',label=sector)
+    plt.title(f'Cumulative return for {sector}')
+    plt.xticks(rotation=90, fontsize=6)
+    plt.xlabel('Year')
+    plt.ylabel('Return')
+    plt.show()
+```
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_0.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_1.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_2.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_3.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_4.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_5.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_6.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_7.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_8.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_9.png)
+    
+
+
+
+    
+![png](training_data_binary_files/training_data_binary_53_10.png)
+    
+
+
+
+```python
+# comprobacion de que no hay 20 empresas de real estate en gran parte del tiempo, por eso salen los mismos valores
+df_final[df_final['new_sector']=='Real Estate'].groupby('quarter')['asset_num'].count()
+```
+
+
+
+
+    quarter
+    2006Q1     9
+    2006Q2    11
+    2006Q3    11
+    2006Q4    12
+    2007Q1    14
+              ..
+    2022Q3    32
+    2022Q4    32
+    2023Q1    31
+    2023Q2    31
+    2023Q3    31
+    Name: asset_num, Length: 71, dtype: int64
+
 
