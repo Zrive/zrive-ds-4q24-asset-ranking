@@ -39,7 +39,7 @@ sp500 = calculate_sp500_return()
 sp500.head()
 ```
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_5360\2621213675.py:4: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns. This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_6844\2621213675.py:4: DeprecationWarning: DataFrameGroupBy.apply operated on the grouping columns. This behavior is deprecated, and in a future version of pandas the grouping columns will be excluded from the operation. Either pass `include_groups=False` to exclude the groupings or explicitly select the grouping columns after groupby to silence this warning.
       sp500 = sp500.groupby('date').apply(lambda group: group.loc[group['date'].idxmax()]).reset_index(drop=True)
     
 
@@ -173,7 +173,7 @@ df_final.replace([np.inf, -np.inf], np.nan, inplace=True)
 
 
 ```python
-info_cols = ['asset_num','quarter','sector','survivor','prices_avg','1year_price','prices_std','1year_price_variation','1year_sp500_return','asset_return_diff_sp500']
+info_cols = ['asset_num','quarter','sector','survivor','price','1year_price','prices_std','1year_price_variation','1year_sp500_return','asset_return_diff_sp500']
 target_col = 'asset_return_gt_sp500'
 df_final['new_sector'] = df_final['new_sector'].astype('category')
 
@@ -181,7 +181,6 @@ feature_cols = [col for col in df_final.columns if col not in info_cols + [targe
 print(df_final[feature_cols].isna().sum())
 ```
 
-    price                                        0
     new_sector                                   0
     ebit_marg                                 2741
     ebitda_marg                               2796
@@ -541,32 +540,32 @@ df_importances
   <tbody>
     <tr>
       <th>0</th>
-      <td>0.011876</td>
-      <td>price</td>
-      <td>2009Q1</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>-0.014305</td>
+      <td>-6.612686e-03</td>
       <td>new_sector</td>
       <td>2009Q1</td>
     </tr>
     <tr>
-      <th>2</th>
-      <td>0.001350</td>
+      <th>1</th>
+      <td>-1.349528e-03</td>
       <td>ebit_marg</td>
       <td>2009Q1</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>0.001889</td>
+      <th>2</th>
+      <td>3.700743e-17</td>
       <td>ebitda_marg</td>
       <td>2009Q1</td>
     </tr>
     <tr>
-      <th>4</th>
-      <td>-0.003239</td>
+      <th>3</th>
+      <td>-2.699055e-04</td>
       <td>net_marg</td>
+      <td>2009Q1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-2.699055e-04</td>
+      <td>ROA</td>
       <td>2009Q1</td>
     </tr>
     <tr>
@@ -576,38 +575,38 @@ df_importances
       <td>...</td>
     </tr>
     <tr>
-      <th>1529</th>
-      <td>-0.002823</td>
+      <th>1470</th>
+      <td>8.333333e-03</td>
       <td>P_B_ratio_mean_sector_diff</td>
       <td>2023Q3</td>
     </tr>
     <tr>
-      <th>1530</th>
-      <td>0.004839</td>
+      <th>1471</th>
+      <td>8.736559e-03</td>
       <td>Debt_to_Equity_mean_sector_diff</td>
       <td>2023Q3</td>
     </tr>
     <tr>
-      <th>1531</th>
-      <td>-0.000403</td>
+      <th>1472</th>
+      <td>3.360215e-03</td>
       <td>Net_Debt_to_EBITDA_mean_sector_diff</td>
       <td>2023Q3</td>
     </tr>
     <tr>
-      <th>1532</th>
-      <td>0.000269</td>
+      <th>1473</th>
+      <td>2.220446e-17</td>
       <td>Asset_Turnover_mean_sector_diff</td>
       <td>2023Q3</td>
     </tr>
     <tr>
-      <th>1533</th>
-      <td>-0.002419</td>
+      <th>1474</th>
+      <td>2.419355e-03</td>
       <td>Cash_Conversion_Ratio_mean_sector_diff</td>
       <td>2023Q3</td>
     </tr>
   </tbody>
 </table>
-<p>1534 rows × 3 columns</p>
+<p>1475 rows × 3 columns</p>
 </div>
 
 
@@ -700,22 +699,23 @@ def calculate_returns(sector_df:bool=False,n_assets:int = 20,column:str='asset_r
                          'baseline_return': baseline_returns})
 ```
 
-
-```python
-n_assets = 20
-df_returns_quarters = calculate_returns(n_assets=n_assets)
-```
-
+### Returns per quarter prediction vs SP500
 At the graph, we can see for each quarter the difference between the return of the prediction and the return of the SP500. We take also the difference between Baseline and SP500 to compare with the prediction model.
 
 
 ```python
+n_assets = 20
+df_returns_quarters = calculate_returns(n_assets=n_assets,column = "asset_return_diff_sp500")
+df_returns_quarters['Q'] = df_returns_quarters['quarter'].str[4:]
+```
+
+
+```python
 plt.subplots(figsize=(15, 6))
-sns.scatterplot(data=df_returns_quarters, x='quarter', y='prediction_return',label='Prediction')
-sns.scatterplot(data=df_returns_quarters, x='quarter', y='baseline_return',label='Baseline')
+sns.barplot(data=df_returns_quarters, x='quarter', y='prediction_return',hue = 'Q')
 plt.axhline(y=0.0, color='r', linestyle='--', label='SP500')
-plt.title(f'Return diff to SP500 by quarter with {n_assets} assets')
-plt.ylabel('Return')
+plt.title(f'Return diff of the prediction to SP500 by quarter with {n_assets} assets coloured by each quarter')
+plt.ylabel('Return (%)')
 plt.xticks(rotation=90, fontsize=6)
 plt.legend()
 plt.show()
@@ -727,13 +727,27 @@ plt.show()
     
 
 
+Percentage of returns of the predictions that performed better than the SP500: 
+
+
+```python
+(df_returns_quarters['prediction_return'] > 0).mean()
+```
+
+
+
+
+    0.4576271186440678
+
+
+
 ### Comparing predictions versus the return of the market for each sector
 
 For each quarter, and sector, we will calculate the return of the model for the top 20 assets compared to the return of the sector
 
 
 ```python
-n_assets = 20
+n_assets = 5
 sector_returns = calculate_returns(sector_df=True,n_assets=n_assets,column='asset_return_diff_sp500')
 ```
 
@@ -742,8 +756,7 @@ sector_returns = calculate_returns(sector_df=True,n_assets=n_assets,column='asse
 for sector in sector_returns['sector'].unique():
     df_sector = sector_returns[sector_returns['sector'] == sector]
     plt.subplots(figsize=(15, 6))
-    sns.scatterplot(data=df_sector, x='quarter', y='prediction_return',label='Prediction')
-    sns.scatterplot(data=df_sector, x='quarter', y='baseline_return',label='Baseline')
+    sns.barplot(data=df_sector, x='quarter', y='prediction_return',label='Prediction')
     plt.axhline(y=0.0, color='r', linestyle='--', label=sector)
     plt.title(f'Return diff to the sector by quarter with {n_assets} assets for {sector}')
     plt.ylabel('Return')
@@ -754,69 +767,71 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_38_0.png)
+![png](training_models_files/training_models_40_0.png)
     
 
 
 
     
-![png](training_models_files/training_models_38_1.png)
+![png](training_models_files/training_models_40_1.png)
     
 
 
 
     
-![png](training_models_files/training_models_38_2.png)
+![png](training_models_files/training_models_40_2.png)
     
 
 
 
     
-![png](training_models_files/training_models_38_3.png)
+![png](training_models_files/training_models_40_3.png)
     
 
 
 
     
-![png](training_models_files/training_models_38_4.png)
+![png](training_models_files/training_models_40_4.png)
     
 
 
 
     
-![png](training_models_files/training_models_38_5.png)
+![png](training_models_files/training_models_40_5.png)
     
 
 
 
     
-![png](training_models_files/training_models_38_6.png)
+![png](training_models_files/training_models_40_6.png)
     
 
 
 
     
-![png](training_models_files/training_models_38_7.png)
+![png](training_models_files/training_models_40_7.png)
     
 
 
 
     
-![png](training_models_files/training_models_38_8.png)
+![png](training_models_files/training_models_40_8.png)
     
 
 
 
     
-![png](training_models_files/training_models_38_9.png)
+![png](training_models_files/training_models_40_9.png)
     
 
 
 
     
-![png](training_models_files/training_models_38_10.png)
+![png](training_models_files/training_models_40_10.png)
     
 
+
+### Performance with 20 assets
 
 
 ```python
@@ -826,8 +841,103 @@ df_returns_quarters = calculate_returns(n_assets=n_assets,
                                         column='1year_price_variation').merge(sp500,
                                                                               left_on='quarter', 
                                                                               right_on='date', how='left').drop(columns='date')
+```
+
+
+```python
+(df_returns_quarters['prediction_return'] > df_returns_quarters['1year_sp500_return']).mean()
+```
+
+
+
+
+    0.4576271186440678
+
+
+
+
+```python
+df_returns_quarters['prediction_return'].mean()
+```
+
+
+
+
+    0.15158401233048271
+
+
+
+
+```python
+df_returns_quarters['baseline_return'].mean()
+```
+
+
+
+
+    0.15697153159535443
+
+
+
+
+```python
+df_returns_quarters['1year_sp500_return'].mean()
+```
+
+
+
+
+    0.1525483773289356
+
+
+
+
+```python
+plt.figure(figsize=(15, 6))
+sns.lineplot(data=df_returns_quarters, x=df_returns_quarters.index, y='prediction_return',label='Prediction')
+sns.lineplot(data=df_returns_quarters, x=df_returns_quarters.index, y='baseline_return',label='Baseline')
+sns.lineplot(data=df_returns_quarters, x=df_returns_quarters.index, y='1year_sp500_return',label='SP500')
+plt.title('Return by year')
+plt.xticks(rotation=90, fontsize=6)
+plt.xlabel('Quarter')
+plt.ylabel('Return per quarter')
+plt.show()
+```
+
+
+    
+![png](training_models_files/training_models_47_0.png)
+    
+
+
+
+```python
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
+
+df_melted = df_returns_quarters.melt(id_vars=['quarter'], 
+                                     value_vars=['prediction_return', 'baseline_return', '1year_sp500_return'],
+                                     var_name='Category', 
+                                     value_name='Return')
+
+plt.figure(figsize=(12, 6))
+sns.barplot(data=df_melted, x='quarter', y='Return', hue='Category', palette='muted')
+
+plt.title('Comparative of return by quarter', fontsize=14)
+plt.xlabel('Quarter', fontsize=12)
+plt.ylabel('Return (%)', fontsize=12)
+plt.xticks(rotation=90, fontsize=10)
+plt.show()
 
 ```
+
+
+    
+![png](training_models_files/training_models_48_0.png)
+    
+
 
 
 ```python
@@ -849,7 +959,7 @@ plt.show()
 
 
     
-![png](training_models_files/training_models_41_0.png)
+![png](training_models_files/training_models_50_0.png)
     
 
 
@@ -861,7 +971,7 @@ acumulative_year.iloc[-1]
 
 
 
-    cumulative_return_prediction_return     723.138573
+    cumulative_return_prediction_return     606.766827
     cumulative_return_baseline_return       531.605529
     cumulative_return_1year_sp500_return    592.642963
     Name: 2024, dtype: float64
@@ -878,7 +988,7 @@ cagr(acumulative_year)*100
 
 
 
-    cumulative_return_prediction_return     13.162190
+    cumulative_return_prediction_return     11.928031
     cumulative_return_baseline_return       11.006739
     cumulative_return_1year_sp500_return    11.763391
     dtype: float64
@@ -893,7 +1003,7 @@ cagr(acumulative_year)*100
 
 
 
-    0.9375
+    0.75
 
 
 
@@ -908,6 +1018,579 @@ cagr(acumulative_year)*100
     0.125
 
 
+
+### Performance with 10 assets
+
+
+```python
+n_assets = 10
+sp500['date'] = sp500['date'].astype(str)
+df_returns_quarters = calculate_returns(n_assets=n_assets,
+                                        column='1year_price_variation').merge(sp500,
+                                                                              left_on='quarter', 
+                                                                              right_on='date', how='left').drop(columns='date')
+
+```
+
+
+```python
+(df_returns_quarters['prediction_return'] > df_returns_quarters['1year_sp500_return']).mean()
+```
+
+
+
+
+    0.4576271186440678
+
+
+
+
+```python
+df_returns_quarters['prediction_return'].mean()
+```
+
+
+
+
+    0.1635182141133435
+
+
+
+
+```python
+df_returns_quarters['baseline_return'].mean()
+```
+
+
+
+
+    0.1757059811093407
+
+
+
+
+```python
+df_returns_quarters['1year_sp500_return'].mean()
+```
+
+
+
+
+    0.1525483773289356
+
+
+
+
+```python
+acumulative_year = acumulative_year_earnings(df_returns_quarters)
+```
+
+
+```python
+plt.figure(figsize=(15, 6))
+sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_prediction_return',label='Prediction')
+sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_baseline_return',label='Baseline')
+sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_1year_sp500_return',label='SP500')
+plt.title('Cumulative return by year')
+plt.xticks(rotation=90, fontsize=6)
+plt.xlabel('Year')
+plt.ylabel('Acumulative return')
+plt.show()
+```
+
+
+    
+![png](training_models_files/training_models_62_0.png)
+    
+
+
+
+```python
+acumulative_year.iloc[-1]
+```
+
+
+
+
+    cumulative_return_prediction_return     688.204850
+    cumulative_return_baseline_return       641.672696
+    cumulative_return_1year_sp500_return    592.642963
+    Name: 2024, dtype: float64
+
+
+
+
+```python
+### CAGR
+cagr = lambda x: (x.iloc[-1] / x.iloc[0]) ** (1 / len(x)) - 1
+cagr(acumulative_year)*100
+```
+
+
+
+
+    cumulative_return_prediction_return     12.812535
+    cumulative_return_baseline_return       12.320001
+    cumulative_return_1year_sp500_return    11.763391
+    dtype: float64
+
+
+
+
+```python
+(acumulative_year['cumulative_return_prediction_return'] > acumulative_year['cumulative_return_1year_sp500_return']).mean()
+```
+
+
+
+
+    0.8125
+
+
+
+
+```python
+(acumulative_year['cumulative_return_baseline_return'] > acumulative_year['cumulative_return_1year_sp500_return']).mean()
+```
+
+
+
+
+    0.3125
+
+
+
+### Performance with 5 assets
+
+
+```python
+n_assets = 5
+sp500['date'] = sp500['date'].astype(str)
+df_returns_quarters = calculate_returns(n_assets=n_assets,
+                                        column='1year_price_variation').merge(sp500,
+                                                                              left_on='quarter', 
+                                                                              right_on='date', how='left').drop(columns='date')
+
+```
+
+
+```python
+(df_returns_quarters['prediction_return'] > df_returns_quarters['1year_sp500_return']).mean()
+```
+
+
+
+
+    0.4915254237288136
+
+
+
+
+```python
+df_returns_quarters['prediction_return'].mean()
+```
+
+
+
+
+    0.1747418881892653
+
+
+
+
+```python
+df_returns_quarters['baseline_return'].mean()
+```
+
+
+
+
+    0.22120015662961945
+
+
+
+
+```python
+df_returns_quarters['1year_sp500_return'].mean()
+```
+
+
+
+
+    0.1525483773289356
+
+
+
+
+```python
+acumulative_year = acumulative_year_earnings(df_returns_quarters)
+```
+
+
+```python
+plt.figure(figsize=(15, 6))
+sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_prediction_return',label='Prediction')
+sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_baseline_return',label='Baseline')
+sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_1year_sp500_return',label='SP500')
+plt.title('Cumulative return by year')
+plt.xticks(rotation=90, fontsize=6)
+plt.xlabel('Year')
+plt.ylabel('Acumulative return')
+plt.show()
+```
+
+
+    
+![png](training_models_files/training_models_74_0.png)
+    
+
+
+
+```python
+acumulative_year.iloc[-1]
+```
+
+
+
+
+    cumulative_return_prediction_return     779.249593
+    cumulative_return_baseline_return       926.437480
+    cumulative_return_1year_sp500_return    592.642963
+    Name: 2024, dtype: float64
+
+
+
+
+```python
+### CAGR
+cagr = lambda x: (x.iloc[-1] / x.iloc[0]) ** (1 / len(x)) - 1
+cagr(acumulative_year)*100
+```
+
+
+
+
+    cumulative_return_prediction_return     13.691969
+    cumulative_return_baseline_return       14.928042
+    cumulative_return_1year_sp500_return    11.763391
+    dtype: float64
+
+
+
+
+```python
+(acumulative_year['cumulative_return_prediction_return'] > acumulative_year['cumulative_return_1year_sp500_return']).mean()
+```
+
+
+
+
+    0.875
+
+
+
+
+```python
+(acumulative_year['cumulative_return_baseline_return'] > acumulative_year['cumulative_return_1year_sp500_return']).mean()
+```
+
+
+
+
+    0.5
+
+
+
+### Return depending on the year the porfolio was created
+
+
+```python
+n_assets =  10
+df_returns_quarters = calculate_returns(n_assets=n_assets,
+                                        column='1year_price_variation').merge(sp500,
+                                                                              left_on='quarter', 
+                                                                              right_on='date', how='left').drop(columns='date')
+```
+
+
+```python
+unique_years = df_returns_quarters['quarter'].str[:4].unique()
+
+for i, year in enumerate(unique_years):
+    # Filtrar el DataFrame eliminando los años anteriores al año actual en la iteración
+    remaining_years = unique_years[i:]  # Toma los años desde la posición actual hasta el final
+    filtered_df = df_returns_quarters[df_returns_quarters['quarter'].str[:4].isin(remaining_years)]
+    
+    # Calcular los retornos acumulativos con el DataFrame filtrado
+    acumulative_year = acumulative_year_earnings(filtered_df)
+    
+    # Crear el gráfico
+    plt.figure(figsize=(15, 6))
+    sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_prediction_return', label='Prediction')
+    sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_baseline_return', label='Baseline')
+    sns.lineplot(data=acumulative_year, x=acumulative_year.index, y='cumulative_return_1year_sp500_return', label='SP500')
+    
+    # Personalización del gráfico
+    plt.title(f'Cumulative return by quarter starting from {year}')
+    plt.xticks(rotation=90, fontsize=6)
+    plt.xlabel('Quarter')
+    plt.ylabel('Cumulative Return')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    
+    print(f"Year: {year}")
+    print(cagr(acumulative_year)*100)
+    print(f"Prediction > SP500: {(acumulative_year['cumulative_return_prediction_return'] > acumulative_year['cumulative_return_1year_sp500_return']).mean()}")
+    print(f"Baseline > SP500: {(acumulative_year['cumulative_return_baseline_return'] > acumulative_year['cumulative_return_1year_sp500_return']).mean()}")
+    print("")
+    
+```
+
+
+    
+![png](training_models_files/training_models_81_0.png)
+    
+
+
+    Year: 2009
+    cumulative_return_prediction_return     12.812535
+    cumulative_return_baseline_return       12.320001
+    cumulative_return_1year_sp500_return    11.763391
+    dtype: float64
+    Prediction > SP500: 0.8125
+    Baseline > SP500: 0.3125
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_2.png)
+    
+
+
+    Year: 2010
+    cumulative_return_prediction_return     10.989461
+    cumulative_return_baseline_return       11.747783
+    cumulative_return_1year_sp500_return    10.727079
+    dtype: float64
+    Prediction > SP500: 0.3333333333333333
+    Baseline > SP500: 0.4
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_4.png)
+    
+
+
+    Year: 2011
+    cumulative_return_prediction_return     10.167478
+    cumulative_return_baseline_return       12.378543
+    cumulative_return_1year_sp500_return     9.975597
+    dtype: float64
+    Prediction > SP500: 0.14285714285714285
+    Baseline > SP500: 0.7857142857142857
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_6.png)
+    
+
+
+    Year: 2012
+    cumulative_return_prediction_return     10.354663
+    cumulative_return_baseline_return       12.262733
+    cumulative_return_1year_sp500_return    10.399114
+    dtype: float64
+    Prediction > SP500: 0.15384615384615385
+    Baseline > SP500: 0.7692307692307693
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_8.png)
+    
+
+
+    Year: 2013
+    cumulative_return_prediction_return     10.319498
+    cumulative_return_baseline_return       11.973680
+    cumulative_return_1year_sp500_return     9.902606
+    dtype: float64
+    Prediction > SP500: 0.16666666666666666
+    Baseline > SP500: 0.6666666666666666
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_10.png)
+    
+
+
+    Year: 2014
+    cumulative_return_prediction_return      9.350706
+    cumulative_return_baseline_return       10.877043
+    cumulative_return_1year_sp500_return     8.492446
+    dtype: float64
+    Prediction > SP500: 0.36363636363636365
+    Baseline > SP500: 0.6363636363636364
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_12.png)
+    
+
+
+    Year: 2015
+    cumulative_return_prediction_return      9.183836
+    cumulative_return_baseline_return       12.236269
+    cumulative_return_1year_sp500_return     8.268191
+    dtype: float64
+    Prediction > SP500: 0.5
+    Baseline > SP500: 0.9
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_14.png)
+    
+
+
+    Year: 2016
+    cumulative_return_prediction_return      9.304479
+    cumulative_return_baseline_return       13.284727
+    cumulative_return_1year_sp500_return     8.917263
+    dtype: float64
+    Prediction > SP500: 0.2222222222222222
+    Baseline > SP500: 0.8888888888888888
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_16.png)
+    
+
+
+    Year: 2017
+    cumulative_return_prediction_return      8.598475
+    cumulative_return_baseline_return       11.452860
+    cumulative_return_1year_sp500_return     8.128792
+    dtype: float64
+    Prediction > SP500: 0.375
+    Baseline > SP500: 0.75
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_18.png)
+    
+
+
+    Year: 2018
+    cumulative_return_prediction_return     8.492237
+    cumulative_return_baseline_return       8.834094
+    cumulative_return_1year_sp500_return    7.084379
+    dtype: float64
+    Prediction > SP500: 0.7142857142857143
+    Baseline > SP500: 0.7142857142857143
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_20.png)
+    
+
+
+    Year: 2019
+    cumulative_return_prediction_return      8.802483
+    cumulative_return_baseline_return       12.743294
+    cumulative_return_1year_sp500_return     7.187042
+    dtype: float64
+    Prediction > SP500: 0.6666666666666666
+    Baseline > SP500: 0.8333333333333334
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_22.png)
+    
+
+
+    Year: 2020
+    cumulative_return_prediction_return     11.370688
+    cumulative_return_baseline_return       14.003766
+    cumulative_return_1year_sp500_return     7.372779
+    dtype: float64
+    Prediction > SP500: 0.8
+    Baseline > SP500: 0.8
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_24.png)
+    
+
+
+    Year: 2021
+    cumulative_return_prediction_return     0.412434
+    cumulative_return_baseline_return       7.295425
+    cumulative_return_1year_sp500_return    0.162519
+    dtype: float64
+    Prediction > SP500: 0.5
+    Baseline > SP500: 0.75
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_26.png)
+    
+
+
+    Year: 2022
+    cumulative_return_prediction_return     0.769283
+    cumulative_return_baseline_return       4.642198
+    cumulative_return_1year_sp500_return   -2.586366
+    dtype: float64
+    Prediction > SP500: 0.6666666666666666
+    Baseline > SP500: 0.3333333333333333
+    
+    
+
+
+    
+![png](training_models_files/training_models_81_28.png)
+    
+
+
+    Year: 2023
+    cumulative_return_prediction_return    -4.245070
+    cumulative_return_baseline_return       6.071261
+    cumulative_return_1year_sp500_return   -2.510148
+    dtype: float64
+    Prediction > SP500: 0.0
+    Baseline > SP500: 0.5
+    
+    
+
+### Insights from the analysis
+As we can see, in order to analyze the consistency of our model, it may be better to check the independent returns of each quarter, rather than the cumulative return. That's because the cumulative return may be influenced by the performance of the model in the first quarter, this can be seen on the 2009, where the model seems to have a great consistency, due to the performance of the first year, but in the following years, the performance is similar to SP500. The opposite can be seen on the following years, where the model seems to have a bad consistency, but in the end,the model outperformed the SP500. 
+
+### Performance with 5 assets per sector
 
 
 ```python
@@ -935,12 +1618,12 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_0.png)
+![png](training_models_files/training_models_85_0.png)
     
 
 
     Anualized return for Information Technology
-    cumulative_return_prediction_return    13.592283
+    cumulative_return_prediction_return    13.466433
     cumulative_return_baseline_return      14.894145
     cumulative_return_sector_return        15.825332
     dtype: float64
@@ -948,12 +1631,12 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_2.png)
+![png](training_models_files/training_models_85_2.png)
     
 
 
     Anualized return for Health Care
-    cumulative_return_prediction_return    10.196098
+    cumulative_return_prediction_return    11.342887
     cumulative_return_baseline_return      11.946829
     cumulative_return_sector_return        11.523774
     dtype: float64
@@ -961,12 +1644,12 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_4.png)
+![png](training_models_files/training_models_85_4.png)
     
 
 
     Anualized return for Consumer Discretionary
-    cumulative_return_prediction_return    14.628377
+    cumulative_return_prediction_return    13.749081
     cumulative_return_baseline_return       6.674209
     cumulative_return_sector_return        10.881734
     dtype: float64
@@ -974,12 +1657,12 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_6.png)
+![png](training_models_files/training_models_85_6.png)
     
 
 
     Anualized return for Financials
-    cumulative_return_prediction_return    10.877408
+    cumulative_return_prediction_return    11.455026
     cumulative_return_baseline_return       8.280418
     cumulative_return_sector_return        11.411276
     dtype: float64
@@ -987,12 +1670,12 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_8.png)
+![png](training_models_files/training_models_85_8.png)
     
 
 
     Anualized return for Communication Services
-    cumulative_return_prediction_return    11.809543
+    cumulative_return_prediction_return    10.832259
     cumulative_return_baseline_return       9.881442
     cumulative_return_sector_return        10.626767
     dtype: float64
@@ -1000,12 +1683,12 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_10.png)
+![png](training_models_files/training_models_85_10.png)
     
 
 
     Anualized return for Consumer Staples
-    cumulative_return_prediction_return    10.780033
+    cumulative_return_prediction_return    11.233413
     cumulative_return_baseline_return       9.041555
     cumulative_return_sector_return         9.962847
     dtype: float64
@@ -1013,12 +1696,12 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_12.png)
+![png](training_models_files/training_models_85_12.png)
     
 
 
     Anualized return for Industrials
-    cumulative_return_prediction_return    14.819392
+    cumulative_return_prediction_return    15.028583
     cumulative_return_baseline_return      13.391614
     cumulative_return_sector_return        12.912353
     dtype: float64
@@ -1026,12 +1709,12 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_14.png)
+![png](training_models_files/training_models_85_14.png)
     
 
 
     Anualized return for Materials
-    cumulative_return_prediction_return    10.025168
+    cumulative_return_prediction_return    10.332973
     cumulative_return_baseline_return      10.102104
     cumulative_return_sector_return        10.691435
     dtype: float64
@@ -1039,12 +1722,12 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_16.png)
+![png](training_models_files/training_models_85_16.png)
     
 
 
     Anualized return for Utilities
-    cumulative_return_prediction_return     9.465220
+    cumulative_return_prediction_return     9.826274
     cumulative_return_baseline_return      10.491151
     cumulative_return_sector_return         8.695793
     dtype: float64
@@ -1052,12 +1735,12 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_18.png)
+![png](training_models_files/training_models_85_18.png)
     
 
 
     Anualized return for Energy
-    cumulative_return_prediction_return    3.388525
+    cumulative_return_prediction_return    3.797180
     cumulative_return_baseline_return      3.729504
     cumulative_return_sector_return        5.318426
     dtype: float64
@@ -1065,47 +1748,21 @@ for sector in sector_returns['sector'].unique():
 
 
     
-![png](training_models_files/training_models_47_20.png)
+![png](training_models_files/training_models_85_20.png)
     
 
 
     Anualized return for Real Estate
-    cumulative_return_prediction_return     9.845480
+    cumulative_return_prediction_return    10.801188
     cumulative_return_baseline_return       7.100299
     cumulative_return_sector_return        10.173296
     dtype: float64
     
 
-
-```python
-# comprobacion de que no hay 20 empresas de real estate en gran parte del tiempo, por eso salen los mismos valores
-df_final[df_final['new_sector']=='Real Estate'].groupby('quarter')['asset_num'].count()
-```
-
-
-
-
-    quarter
-    2006Q1     9
-    2006Q2    11
-    2006Q3    11
-    2006Q4    12
-    2007Q1    14
-              ..
-    2022Q3    32
-    2022Q4    32
-    2023Q1    31
-    2023Q2    31
-    2023Q3    31
-    Name: asset_num, Length: 71, dtype: int64
-
-
-
-### Comparing the proportion of the percentage of the sectors invested in the portfolio
+### Comparing the proportion of the percentage of the sectors invested in the portfolio (Case with 20 assets)
 
 
 ```python
-# caso hecho para 20 empresas
 df_sectors = pd.DataFrame(columns=['quarter','percentage']) 
 for i in range(len(datasets)):
     quarter = unique_quarters[i+window_size] 
@@ -1114,19 +1771,18 @@ for i in range(len(datasets)):
     data = {'quarter':quarter,'percentage':sectors_invested}
     df_pivot = pd.DataFrame(data).reset_index()
     df_sectors = pd.concat([df_sectors,df_pivot])
-df_sectors['año'] = df_sectors['quarter'].str[:4]
-df_sectors = df_sectors.groupby(['año','new_sector'])['percentage'].mean().reset_index()
+df_sectors = df_sectors.groupby(['quarter','new_sector'])['percentage'].mean().reset_index()
 ```
 
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_5360\4067623807.py:9: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_6844\2485387780.py:9: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
       df_sectors = pd.concat([df_sectors,df_pivot])
-    C:\Users\ALEX\AppData\Local\Temp\ipykernel_5360\4067623807.py:11: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
-      df_sectors = df_sectors.groupby(['año','new_sector'])['percentage'].mean().reset_index()
+    C:\Users\ALEX\AppData\Local\Temp\ipykernel_6844\2485387780.py:10: FutureWarning: The default of observed=False is deprecated and will be changed to True in a future version of pandas. Pass observed=False to retain current behavior or observed=True to adopt the future default and silence this warning.
+      df_sectors = df_sectors.groupby(['quarter','new_sector'])['percentage'].mean().reset_index()
     
 
 
 ```python
-df_sectors.pivot(index='año',columns='new_sector',values='percentage').plot(
+df_sectors.pivot(index='quarter',columns='new_sector',values='percentage').plot(
         kind="bar",
         stacked=True,
         figsize=(12, 8),)
@@ -1139,11 +1795,6 @@ plt.show()
 
 
     
-![png](training_models_files/training_models_51_0.png)
+![png](training_models_files/training_models_88_0.png)
     
 
-
-
-```python
-
-```
